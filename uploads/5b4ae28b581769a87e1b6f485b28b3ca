@@ -1,0 +1,995 @@
+00:00:00.160 in this video i'm going to show you
+00:00:01.360 everything you need to know about socket
+00:00:02.879 io from the basics of sending messages
+00:00:04.720 between people
+00:00:05.680 joining different rooms and also more
+00:00:08.160 complex things such as this entire admin
+00:00:10.400 dashboard how to deal with namespaces
+00:00:12.639 middleware authentication and so much
+00:00:15.599 more
+00:00:16.540 [Music]
+00:00:19.199 welcome back to web dev simplified my
+00:00:21.199 name is kyle and my job is to simplify
+00:00:23.039 the web for you
+00:00:23.840 so you can start building your dream
+00:00:25.039 project sooner so if that sounds
+00:00:26.480 interesting make sure you subscribe to
+00:00:27.840 the channel for more videos just like
+00:00:29.199 this now to get started with this
+00:00:30.640 project i have a little bit of
+00:00:31.760 boilerplate code set up
+00:00:33.120 as you can see i have a bunch of
+00:00:34.079 different styles inside of here i also
+00:00:35.920 have some just
+00:00:36.640 basic html to get the page that you can
+00:00:38.559 see on the right hand side of our screen
+00:00:40.399 and i also instead of our script just
+00:00:42.160 have a few basic things set up
+00:00:43.680 i'm selecting our form our room input
+00:00:46.000 our message input and our room button
+00:00:47.600 just all the components down here
+00:00:49.280 and i have an event listener so whenever
+00:00:50.640 we submit our form as you can see it's
+00:00:52.640 getting our message and room values
+00:00:54.399 if we don't have a message is doing
+00:00:55.600 nothing otherwise we're going to call
+00:00:56.800 this display message function with our
+00:00:58.320 message and then clear out an input so
+00:00:59.840 if i type in a message
+00:01:00.719 click send you can see it just displays
+00:01:02.559 that message up here that's all this
+00:01:04.000 display message function is doing
+00:01:05.840 and then finally we have this join room
+00:01:07.439 button event listener so when we click
+00:01:08.799 on our join room button down here
+00:01:10.560 it's going to call this function and
+00:01:11.760 just get that room value just some
+00:01:13.360 boilerplate code out of the way and i'm
+00:01:15.280 running this
+00:01:15.840 using snowpack so as you can see i have
+00:01:17.200 snowpack as a dev dependency and i'm
+00:01:18.720 just running snowpack dev
+00:01:20.159 so we have this server set up on the
+00:01:21.759 side here none of that really matters
+00:01:23.680 too much though since this entire video
+00:01:25.200 is really focused on socket io
+00:01:27.280 also i have a server folder here this
+00:01:29.040 server.js is empty and in our package
+00:01:30.880 json we're just running nodemon with
+00:01:32.400 that server file so that every time we
+00:01:34.079 make changes it auto refreshes so if i
+00:01:36.079 just open up a terminal
+00:01:37.360 and i go into that server folder and i
+00:01:39.759 just run npm run
+00:01:41.200 dev start that is going to start up and
+00:01:43.119 run our file and then every time we make
+00:01:44.799 changes inside of that server js
+00:01:46.960 such as console.log i as you can see
+00:01:49.840 those changes are automatically
+00:01:50.960 refreshing for us
+00:01:52.320 so now in order to get started with
+00:01:53.600 socket io we first need to understand
+00:01:55.119 exactly what socket io it's doing
+00:01:57.040 and all it's doing is allowing us to
+00:01:58.479 make a connection between a client and a
+00:02:00.399 server but have that connection persist
+00:02:02.640 so normally when you need to make for
+00:02:04.240 example a fetch request
+00:02:05.920 or some type of ajax request what you're
+00:02:08.000 doing is you're saying hey server give
+00:02:09.598 me information
+00:02:10.800 so you're asking some server for some
+00:02:13.280 information so you're going to be
+00:02:14.319 pointing to the server
+00:02:15.520 and then the server is going to give
+00:02:16.800 that information back to the client
+00:02:19.120 when you use something like fetch or
+00:02:20.560 ajax and that's the end of the request
+00:02:22.560 so you do a
+00:02:23.280 fetch it gets to the server gets to the
+00:02:24.879 client and then the information closes
+00:02:26.720 off
+00:02:27.280 but if you need to make for example 10
+00:02:28.879 different fetch requests well you need
+00:02:30.480 to make 10 new requests to the server
+00:02:32.720 you're going to do this you know 10
+00:02:34.000 different times with socket i o it's a
+00:02:36.160 bit different
+00:02:36.959 what you're going to be doing is you're
+00:02:38.160 going to be setting up something called
+00:02:39.360 a web socket
+00:02:40.400 and these web sockets are going to
+00:02:41.920 connect to the server but that
+00:02:43.840 connection stays open so if i make 10
+00:02:46.000 requests to the server through my
+00:02:47.280 websocket
+00:02:48.160 i only ever make one connection to the
+00:02:50.800 server because that connection stays
+00:02:52.239 open
+00:02:52.879 this is really useful when you need to
+00:02:54.239 make a lot of requests especially if
+00:02:55.760 they're smaller requests because you can
+00:02:57.200 just constantly talk with the server
+00:02:58.879 without having to worry about the
+00:03:00.080 headache of setting up a connection and
+00:03:01.920 then tearing down the connection
+00:03:03.360 because those things do take time and
+00:03:05.280 when all you're doing is communicating a
+00:03:06.800 lot of small things to the server
+00:03:08.400 that extra time of setting up and
+00:03:10.159 closing down that connection are gonna
+00:03:11.920 really add up which is where web sockets
+00:03:13.680 are really useful
+00:03:14.560 so things like chat applications which
+00:03:16.400 is what we're gonna work towards in this
+00:03:17.680 video
+00:03:18.080 are really ideal for web sockets so in
+00:03:20.800 order to get this set up
+00:03:21.840 we first need to have a server which is
+00:03:23.440 what we're going to communicate to and
+00:03:24.799 then we need a client that is going to
+00:03:26.159 connect to that server
+00:03:28.159 i'm going to get started by setting up
+00:03:29.440 the server because it's fairly
+00:03:30.480 straightforward all we need to do is
+00:03:31.920 come in here in npmi
+00:03:33.599 our socket dot io library this is just
+00:03:36.080 going to make doing that websocket stuff
+00:03:38.000 so much easier now let's start our
+00:03:39.599 server back up and to deal with the
+00:03:41.280 socket io library
+00:03:42.480 we're going to require socket.io
+00:03:45.519 and this is actually a function and
+00:03:46.879 we're just going to call this function
+00:03:48.159 and pass it in the port
+00:03:49.440 of our server so we're going to say port
+00:03:51.360 3000 is where socket io is going to run
+00:03:54.000 now we can just come in here and say
+00:03:55.680 that's going to be equal to a variable
+00:03:57.040 called io
+00:03:58.239 and then what we can do is say that io
+00:04:00.560 dot on
+00:04:01.680 and we're going to say on connection and
+00:04:04.319 what this is going to do is it's going
+00:04:05.599 to be a function that runs
+00:04:07.120 every single time a client connects to
+00:04:09.599 our server
+00:04:10.319 and it's going to give a socket instance
+00:04:12.080 for each one of them
+00:04:13.360 and for now i'm just going to say
+00:04:14.400 console.log or socket.id which is just a
+00:04:17.279 random id assigned to each person when
+00:04:19.279 they connect to our server
+00:04:20.639 this is all it takes really to set up a
+00:04:22.320 server with socket io so the server side
+00:04:24.479 of things is done
+00:04:25.680 we can move over to the client side of
+00:04:27.280 things and we need to install a library
+00:04:28.960 down here
+00:04:29.600 so we can say npm i socket dot io dash
+00:04:33.040 client this is going to be the client
+00:04:34.800 version of the library that we're going
+00:04:36.240 to be using
+00:04:37.280 and let's start that server back up so
+00:04:39.520 now instead of our script we're just
+00:04:40.639 going to say that we're going to import
+00:04:42.000 i o we're going to get that from that
+00:04:45.040 socket io client and this i o is just a
+00:04:48.479 function that we can call to get a
+00:04:49.919 individual socket
+00:04:51.040 so let's come down here we're going to
+00:04:52.160 say that our socket is going to be equal
+00:04:54.000 to calling i o
+00:04:55.199 and here you need to pass it to the url
+00:04:57.120 of our server well our server we know is
+00:04:59.199 on http
+00:05:01.680 localhost and we gave it the port of
+00:05:03.919 3000. so now this is going to connect us
+00:05:06.400 to our server and now if we save this
+00:05:08.720 and we go over to our server
+00:05:10.080 here once everything refreshes and gets
+00:05:12.320 running we should hopefully see that
+00:05:13.680 we're able to connect
+00:05:14.560 to the server and inside of here we
+00:05:16.320 should be logging out that id
+00:05:18.000 but that's not happening as you can see
+00:05:19.759 so if we inspect our page you're going
+00:05:21.039 to notice an interesting error that
+00:05:22.400 shows up
+00:05:23.440 and if we just refresh this to make sure
+00:05:24.880 that error shows up you can see that
+00:05:26.240 we're getting a bunch of errors and it's
+00:05:27.440 all saying cores we're all being blocked
+00:05:29.120 by
+00:05:29.440 cores well with socket io right now
+00:05:31.440 we're on port 8080 for our client and
+00:05:33.280 our server is on port 3000 and these two
+00:05:35.360 things cannot communicate to each other
+00:05:36.800 because cores is blocking them and if
+00:05:38.400 you're not really familiar with course i
+00:05:39.759 have a whole video on it i'll link in
+00:05:41.120 the cards and description for you
+00:05:42.560 but socket io makes dealing with cores
+00:05:44.479 really easy all we do is pass in an
+00:05:46.479 options parameter to this function
+00:05:48.560 and in here we just say cores and for
+00:05:50.800 cores all we need to do is say that our
+00:05:52.400 origin
+00:05:53.199 is going to be equal to an array of
+00:05:54.639 origins and we just pass in wherever our
+00:05:56.479 client is so our client we know is
+00:05:58.160 localhost
+00:05:59.360 3000 i'm sorry 8080. so we just have an
+00:06:02.080 array
+00:06:02.560 and it's saying localhost 8080 is where
+00:06:04.720 our client lives
+00:06:06.000 now we save and we wait a second you can
+00:06:07.919 see our ids are being printed out down
+00:06:09.520 here one for each one of our different
+00:06:11.120 clients and if we inspect we should
+00:06:12.400 hopefully have no errors inside of here
+00:06:13.919 if we just close this out there'll be no
+00:06:15.360 new errors that come up those are just
+00:06:16.560 old errors from before
+00:06:17.759 but as you can see we now have two
+00:06:19.039 different connections one for each one
+00:06:20.400 of our browsers
+00:06:21.360 and that's because every time someone
+00:06:22.800 connects to our website they're going to
+00:06:24.319 get this connection made so
+00:06:25.840 any computer anywhere connecting to our
+00:06:27.600 site is going to go to this io.on
+00:06:29.680 connection
+00:06:30.240 and that's purely because in our script
+00:06:31.759 here we're creating a new socket now the
+00:06:34.240 important thing about socket i o is the
+00:06:35.919 communication between the server and
+00:06:37.600 client
+00:06:38.000 right now we created a connection
+00:06:39.680 between the server and client
+00:06:41.039 and in order to check that connection
+00:06:42.639 what we can do is we can just say
+00:06:43.759 socket.on
+00:06:44.880 and this is going to listen to any event
+00:06:46.319 we can create our own custom events or
+00:06:48.319 we can use an event such as connect
+00:06:50.000 which is a event that will run
+00:06:51.759 every time we connect to our server and
+00:06:54.080 inside of here
+00:06:55.039 what we want to do is we just want to
+00:06:56.240 print something out we're going to
+00:06:57.199 display a message to the screen that
+00:06:58.960 says
+00:06:59.919 you connected with id and let's just
+00:07:03.199 print out their id which is socket.id
+00:07:06.720 make sure that this is a dollar sign up
+00:07:08.400 here and now when we save you can see
+00:07:10.319 immediately when we connect it's saying
+00:07:11.840 you connected with id and it's printing
+00:07:13.520 out the id of the socket that we
+00:07:14.720 connected to the server with
+00:07:16.400 so now we can set up a connection to the
+00:07:18.240 client and server we can listen to
+00:07:19.840 events coming down from the server
+00:07:21.520 but how do we send events up from the
+00:07:23.680 client to the server
+00:07:25.120 well this is where we can do something
+00:07:26.479 called socket.emit
+00:07:28.160 emit is just going to take any event
+00:07:29.759 that you want and send it to the server
+00:07:31.599 so we can name the event
+00:07:32.720 anything we want let's just say custom
+00:07:34.800 event doesn't matter what the name is
+00:07:36.560 and we can pass it any information we
+00:07:38.319 want you know i could pass it 10
+00:07:40.000 i could pass it hi i could pass it in
+00:07:42.240 here an object that says a is equal to
+00:07:44.400 you know let's say a right here i can
+00:07:46.080 pass it as much or as little information
+00:07:47.759 as i want it really doesn't matter
+00:07:49.440 and what's going to happen is it's going
+00:07:50.560 to call this on my server so in the
+00:07:52.960 server we want to listen for this custom
+00:07:54.800 event
+00:07:55.360 event so in the server we can just say
+00:07:57.840 socket.on
+00:07:58.960 so whenever a socket listens and hears
+00:08:01.599 this custom
+00:08:02.879 event it's going to call a function and
+00:08:04.639 that function is going to have all of
+00:08:06.400 these different parameters so we know
+00:08:07.919 that we have
+00:08:08.879 a number a string and an object those
+00:08:11.759 are
+00:08:12.000 three different parameters we're passing
+00:08:13.360 up and let's just for now console.log
+00:08:15.440 our number our string and our object to
+00:08:18.160 see if this is working as expected so if
+00:08:20.000 we save both of these
+00:08:21.120 we should hopefully send this custom
+00:08:22.560 event up as soon as we connect and as
+00:08:24.400 you can see we're sending that up
+00:08:25.440 immediately it's saying 10
+00:08:26.639 hi and then it's passing out that object
+00:08:28.639 and the same thing right here
+00:08:30.560 now sometimes you may notice that if we
+00:08:32.399 save this this actually doesn't get set
+00:08:34.000 up and that's because we actually don't
+00:08:35.519 connect in time so you may need to put
+00:08:37.120 this inside of your on connect to make
+00:08:38.799 sure you're always connected before you
+00:08:40.080 try to send these events
+00:08:41.279 now this is a great way to actually send
+00:08:42.880 events but this event right here is
+00:08:44.399 pretty useless so let's send an event
+00:08:46.000 anytime we try to send a message
+00:08:47.760 inside of here when i send a message i
+00:08:49.600 want to say socket.emit
+00:08:51.519 send message
+00:08:55.360 and inside of here i just want to pass
+00:08:56.560 it up the message we're sending
+00:08:58.480 so now if i go up into our server we can
+00:09:00.320 listen for
+00:09:02.000 that send message function and it's
+00:09:04.320 going to take in
+00:09:06.000 a message and then we can console log
+00:09:08.320 that message
+00:09:09.200 so now whenever i type in a message and
+00:09:10.959 hit send you can see that message is
+00:09:12.959 being sent up to the server and it
+00:09:14.560 doesn't matter which browser i do this
+00:09:16.240 in
+00:09:16.640 all of them are connected so every
+00:09:18.000 single one is going to send up the
+00:09:19.279 message
+00:09:19.839 to the server now we can do is actually
+00:09:22.240 send this message down
+00:09:23.519 to all of our different clients so let's
+00:09:25.040 just refresh both these pages so we have
+00:09:26.720 a blank screen to work with and what i
+00:09:28.000 want to do inside of here
+00:09:29.360 is i want to send this message down to
+00:09:31.440 our client so what we can do is just say
+00:09:33.120 io
+00:09:33.600 dot emit and this is going to emit a
+00:09:35.760 message and we can say
+00:09:37.040 whatever we want we can call this
+00:09:38.160 receive
+00:09:40.720 message we could call it send message
+00:09:42.640 again it really doesn't matter what the
+00:09:43.680 name is you can make whatever you want
+00:09:44.800 and we're going to pass down this
+00:09:46.000 message and what this is going to do is
+00:09:47.440 it's going to tell our server
+00:09:48.880 to send a message to every single socket
+00:09:51.680 out there all of our different clients
+00:09:53.680 so now inside of our client we can
+00:09:55.200 listen for that we can say
+00:09:56.959 socket.on receive message
+00:10:00.800 it's going to take in a message and
+00:10:02.720 let's just display that message out to
+00:10:04.720 the user
+00:10:05.760 so now if we type in a message we'll
+00:10:07.360 just say hi from me
+00:10:09.279 and click send you can see it said hi
+00:10:11.760 from me
+00:10:12.320 and then our other socket also received
+00:10:14.399 this message but
+00:10:15.680 you'll notice this socket also received
+00:10:17.839 the same message
+00:10:18.720 so printed out once because we called a
+00:10:20.640 display message here
+00:10:21.839 and it printed out a second time because
+00:10:23.600 it also got receive message here
+00:10:26.000 so when you do io.omit it sends a
+00:10:28.800 request to all of the different clients
+00:10:31.120 including the client that actually made
+00:10:33.040 the request in the first place
+00:10:34.800 if you only want to send a message or an
+00:10:37.040 event down to all the clients
+00:10:38.640 except for the client that sent the
+00:10:40.720 message well then what you do is you say
+00:10:43.160 socket.broadcast
+00:10:45.600 and then dot of mid what this is saying
+00:10:47.440 is okay i want to take our current stock
+00:10:49.519 cut and from that socket i want to
+00:10:50.959 broadcast a message to
+00:10:52.399 every other socket that isn't me and
+00:10:54.880 that message is this
+00:10:56.399 now if we save this let's just refresh
+00:10:58.160 both these pages here i'm going to send
+00:10:59.920 hi
+00:11:00.320 from me you'll now notice it gets sent
+00:11:02.560 to both users
+00:11:03.519 but it doesn't actually get sent to this
+00:11:05.279 first user and that's because
+00:11:07.120 we're already displaying the message
+00:11:08.480 here and it's not ever receiving the
+00:11:10.399 message up here we're only sending it to
+00:11:12.160 every other user
+00:11:13.440 except for the one that we currently are
+00:11:15.600 that's what this broadcast flag is going
+00:11:17.360 to do
+00:11:17.760 super useful in scenarios like this now
+00:11:20.160 this right here is essentially the most
+00:11:21.440 basic form of socket io we can
+00:11:23.600 send and receive events from the client
+00:11:25.760 to the server and from the server to the
+00:11:27.360 client and we can
+00:11:28.480 choose which sockets we're going to be
+00:11:29.839 sending those to whether we're going to
+00:11:30.959 send it to all the sockets
+00:11:32.320 or every socket except for ourselves but
+00:11:34.959 what happens if we want to be able to
+00:11:36.160 have private rooms
+00:11:37.519 where we only communicate with certain
+00:11:39.440 people or we join a room and then we
+00:11:41.360 only get messages
+00:11:42.320 inside of that room well that's a thing
+00:11:44.079 that we can do inside of socket io
+00:11:46.240 by default every single user in socket
+00:11:48.560 io has their own room
+00:11:49.839 and that's just their id right here so
+00:11:51.760 this user is currently in a room with
+00:11:53.680 themselves with this id
+00:11:55.279 so if i want to send a message to
+00:11:56.800 another user i can send it to a room
+00:11:59.200 that is their id so let's do that real
+00:12:01.519 quick what i want to do is i want to
+00:12:02.720 send a message
+00:12:03.440 and i'm going to pass up the room
+00:12:04.560 property so whatever we type in here is
+00:12:06.320 going to be our room variable
+00:12:07.760 i'm also going to pass up the message
+00:12:09.839 then instead of our server
+00:12:11.120 we're going to take in that message and
+00:12:13.519 the room
+00:12:14.399 i just want to do a quick check to see
+00:12:16.320 if our room
+00:12:17.600 is equal to nothing well then we don't
+00:12:20.000 have a room so we're just going to
+00:12:21.040 broadcast this to everyone
+00:12:22.880 otherwise if we do have a room we want
+00:12:24.720 to send our message specifically to that
+00:12:26.880 room
+00:12:27.519 so we can say socket.2 room and this
+00:12:30.639 room is just a unique name it can be
+00:12:32.079 whatever you want it to be it's just
+00:12:33.839 going to be a room and everyone that's
+00:12:35.200 currently in that room is going to get
+00:12:36.880 the message
+00:12:37.760 and then we can just copy the rest of
+00:12:39.120 this the submit part right here so we're
+00:12:40.959 going to emit a message
+00:12:41.920 to this room from this socket and the
+00:12:44.079 nice thing about using dot 2
+00:12:45.920 is it already does this broadcast
+00:12:48.079 portion so this dot broadcast is assumed
+00:12:50.320 when you're sending a message to a room
+00:12:51.920 it sends it to everyone
+00:12:53.040 except for yourself so now what we can
+00:12:55.440 do is we can come in here just refresh
+00:12:57.519 refresh
+00:12:58.240 we can say this is a message to all
+00:13:01.600 and we click send and you can see that
+00:13:03.040 message gets sent to everyone but what
+00:13:04.880 if i want to send a message to just
+00:13:06.480 this user right here well let's just
+00:13:08.320 come in here i'm going to open up a new
+00:13:09.760 tab
+00:13:10.079 and this tab is a brand new user and i
+00:13:11.839 want to send a message only to this user
+00:13:14.079 i can say this is private i can paste in
+00:13:17.279 the room that i want to send that to and
+00:13:18.800 remember i said every socket
+00:13:20.320 is in a room that is the same as their
+00:13:22.000 id so this socket has a room that starts
+00:13:24.480 with upt
+00:13:25.360 this one has that underscore five rooms
+00:13:26.959 when i click send i sent this private
+00:13:29.040 message to this user it shows up here
+00:13:30.959 just because
+00:13:31.920 inside of our script.js we're always
+00:13:33.519 displaying a message when we send it
+00:13:35.040 but this new user over here didn't get
+00:13:36.720 the private message but if i send a
+00:13:38.800 public message for example i say
+00:13:40.639 this is public
+00:13:44.000 you can see this person got it this
+00:13:45.360 person got it and this new person also
+00:13:47.279 got that message
+00:13:48.240 so i'm able to send private messages or
+00:13:50.079 public messages based on this
+00:13:51.760 room id and this id is just the id of
+00:13:54.000 the socket itself
+00:13:55.279 so that's really good for sending
+00:13:56.399 one-on-one types of messages but what
+00:13:58.399 happens if you want to send a message to
+00:13:59.920 multiple people but not to everyone
+00:14:02.079 this is where the idea of custom rooms
+00:14:04.079 come in inside of our code here we have
+00:14:06.160 this join room button
+00:14:07.360 and we want to take in the room and we
+00:14:08.720 want to join that room but we can't join
+00:14:10.880 a room from the client we need to tell
+00:14:12.480 the server we're going to be joined in a
+00:14:14.000 room
+00:14:14.720 so i'm going to say socket emit i'm
+00:14:16.160 going to send up a message that's just
+00:14:17.600 called join room
+00:14:18.800 and the join room is going to take in
+00:14:20.320 the room that we want to join and this
+00:14:21.839 is going to join me to that room
+00:14:23.360 so in the server let's set up a listener
+00:14:25.040 for that we can say
+00:14:26.839 socket.on join room we're going to take
+00:14:30.480 in a room
+00:14:31.120 and what i want to do is actually join
+00:14:32.480 the user to this room and this is
+00:14:34.240 actually really easy to do in socket io
+00:14:35.760 we just say socket.join
+00:14:37.279 and we pass it in the room we want to
+00:14:38.720 join and this will join a room with this
+00:14:40.560 custom name
+00:14:41.600 so now what i can do just refresh both
+00:14:43.600 these users here get rid of this extra
+00:14:45.199 one
+00:14:46.000 and what we want to do is we're going to
+00:14:46.959 say that we're going to join the room
+00:14:48.399 test for this user click join
+00:14:50.320 down here we're going to join the room
+00:14:51.680 test as well actually let's not join the
+00:14:53.279 room test yet
+00:14:54.320 we're going to send our message up here
+00:14:55.760 and you notice it doesn't send to the
+00:14:57.120 user down here
+00:14:58.079 but if we join that test room now
+00:15:00.320 they're both in the same room so when we
+00:15:01.760 click send it's going to send that
+00:15:03.040 message to both users in that room
+00:15:05.040 and that's because whenever we have a
+00:15:06.240 room typed in down here it's going to
+00:15:08.000 send a message to that room
+00:15:09.519 and since both these users are in the
+00:15:11.120 test room it's going to send that
+00:15:12.480 message to them
+00:15:13.519 but if we were to send a message for
+00:15:15.120 example to test 3 this user is not in
+00:15:17.279 test 3 down here so when we send a
+00:15:18.880 message
+00:15:19.440 it doesn't go to the user but if we join
+00:15:21.440 test 3 and then send the message it now
+00:15:23.680 gets sent to both users
+00:15:25.360 and the nice thing about rooms is you
+00:15:26.560 can join as many rooms as you want for
+00:15:28.240 example this user is still
+00:15:29.519 in this room right here which is their
+00:15:31.199 id and they're still in that original
+00:15:33.839 test room
+00:15:34.720 they're in all the different rooms that
+00:15:36.000 they joined up to this point
+00:15:37.759 so rooms are really good for being able
+00:15:39.199 to segment different users you can think
+00:15:40.959 for example like a group
+00:15:42.160 chat would be great for having rooms or
+00:15:43.759 if you have like a game that you're
+00:15:45.120 creating
+00:15:45.759 each lobby is going to be its own
+00:15:47.279 particular room but one additional thing
+00:15:49.440 that you can do with these events of
+00:15:50.959 socket on and socket emit
+00:15:52.720 is you can actually pass it up a
+00:15:54.160 callback function and this callback
+00:15:55.839 function is going to get called
+00:15:57.199 from the server back down to the client
+00:15:59.279 so let's pass this a callback which is
+00:16:00.880 going to take in a message
+00:16:02.720 and all i want to do is display that
+00:16:04.240 message so we can just say display
+00:16:05.600 message
+00:16:06.240 of that message this is our callback
+00:16:08.079 function in this callback function we
+00:16:10.000 get on the server
+00:16:11.120 so here we're going to have our room and
+00:16:13.440 we're also going to have this callback
+00:16:15.120 and the callback must always be the last
+00:16:17.199 thing
+00:16:17.519 you pass to a dot omit and then what we
+00:16:19.600 can do is we can just call that callback
+00:16:21.120 with a message for example we can say
+00:16:22.800 joined
+00:16:25.199 and then we can pass it in the name of
+00:16:26.639 the room that they joined so now what
+00:16:28.639 we're doing
+00:16:29.279 is inside of our socket on we're joined
+00:16:30.880 into that room and then we're calling
+00:16:32.079 this callback and this callback is
+00:16:33.600 really cool because you can't call code
+00:16:35.759 from the client when you're in the
+00:16:36.959 server and you can't call code in the
+00:16:38.480 server when you're on the client
+00:16:39.839 but with this callback it allows you to
+00:16:41.279 essentially do that because behind the
+00:16:43.279 scenes it's doing a websocket connection
+00:16:45.040 to make this work
+00:16:46.000 so what's happening is we're passing up
+00:16:47.279 this function saying hey you know what
+00:16:48.800 call this function with a result
+00:16:50.639 whenever we call our joined room here
+00:16:52.480 and so we're saying okay we're calling
+00:16:53.600 that function and we're passing it down
+00:16:54.880 this message
+00:16:55.839 so now when i type in a room here and
+00:16:57.839 click join it gives us back that joint
+00:17:00.320 with the name here so it's calling the
+00:17:01.839 callback with this string and passing it
+00:17:03.680 down
+00:17:04.000 to this callback right here this is a
+00:17:05.919 really cool thing inside of socket io
+00:17:07.839 because if you just want to do something
+00:17:09.280 and then tell the user that that thing
+00:17:10.959 was successful for example join in a
+00:17:12.720 room
+00:17:13.199 this is a great use case for this
+00:17:15.359 another place this is great is if you
+00:17:16.959 wanted to have a
+00:17:18.079 messaging system where you would tell
+00:17:19.599 the user once the message was sent
+00:17:21.679 well this callback could be used to
+00:17:23.359 verify that the message was sent
+00:17:25.039 because sometimes you may send off a
+00:17:26.480 socket request and it takes a long time
+00:17:28.400 for it to process
+00:17:29.440 the internet connection slow where the
+00:17:30.960 server is backed up so it's going to
+00:17:32.720 take a long time to process
+00:17:34.000 so being able to have the feedback from
+00:17:35.679 the user saying you know what here's the
+00:17:37.120 callback your message was successful is
+00:17:38.960 really useful
+00:17:40.160 now right there is the bulk of socket io
+00:17:43.039 but there's a bunch of additional more
+00:17:44.799 niche features that i really want to
+00:17:46.160 show you so the first one is going to be
+00:17:48.000 an admin ui so what we need to do is we
+00:17:50.480 need to npmi
+00:17:52.080 the at socket dot io admin
+00:17:55.280 ui library this is going to give you a
+00:17:57.280 super nice dashboard that you can use to
+00:17:59.120 view socket io
+00:18:00.080 stuff now once that's done we can
+00:18:01.679 restart our dev server and at the top i
+00:18:03.520 want to be able to import that so we can
+00:18:05.200 say const
+00:18:06.480 instrument which is the function that we
+00:18:08.240 want to get is going to come from
+00:18:10.080 requiring
+00:18:11.280 that socket io admin ui and then we just
+00:18:14.640 need to call this instrument function
+00:18:16.320 oops instrument
+00:18:19.360 we need to pass it in the instance of
+00:18:20.880 our i o and then we're going to say
+00:18:22.880 auth is false because for now we don't
+00:18:24.400 really care about authentication to get
+00:18:26.080 into this dashboard
+00:18:27.039 obviously you're going to want to set
+00:18:28.240 auth to some type of username password
+00:18:30.240 but for our use cases just temporary we
+00:18:32.000 don't really care about that
+00:18:33.280 now once you've done that what you need
+00:18:34.640 to do is you need to go to this
+00:18:37.000 admin.socket.io
+00:18:38.240 website and this is essentially going to
+00:18:39.840 allow you to log in with that
+00:18:41.360 server url which in our case is http
+00:18:44.400 slash local host 3000 and then just add
+00:18:48.000 slash admin to the end of it and if we
+00:18:50.320 have a username password this is where
+00:18:51.679 you would enter it since we don't we're
+00:18:53.039 just going to click connect
+00:18:54.400 now you'll notice when we click connect
+00:18:55.679 we're getting an error and that's
+00:18:56.880 because we need to take this url
+00:18:58.880 which is just admin.socket.io and we
+00:19:00.960 need to add that to our cores
+00:19:02.640 origin list so let's add that into our
+00:19:04.720 list here
+00:19:05.840 and now when we try to do our connect
+00:19:07.440 you're going to notice we successfully
+00:19:08.960 connect
+00:19:09.600 and if i just make this dashboard a
+00:19:10.880 little bigger so we can see what's going
+00:19:12.080 on in our dashboard we can see all the
+00:19:13.840 different web sockets we have connected
+00:19:15.440 which in our case is three sockets two
+00:19:17.679 of them are because of the web browsers
+00:19:19.520 that we have right here
+00:19:20.720 and the third one is one that's
+00:19:22.080 connected on this admin namespace and
+00:19:23.600 that's because in order to build out
+00:19:25.039 this dashboard
+00:19:25.840 socket io just uses a socket connection
+00:19:28.080 so that's where this one socket comes
+00:19:29.440 from
+00:19:30.000 also you can see we have one server
+00:19:31.360 because we only have one server running
+00:19:32.960 let's throw this into dark mode
+00:19:34.400 we can view each one of our sockets here
+00:19:36.000 and we can view some pretty in-depth
+00:19:37.520 detail about all of our different
+00:19:38.720 sockets
+00:19:39.280 such as the rooms that they're in we can
+00:19:41.120 see the name spaces that they're a part
+00:19:42.720 of which is something we're going to
+00:19:43.760 cover in a little bit
+00:19:44.799 you can also see all the different rooms
+00:19:46.559 that are available so if we decide to
+00:19:48.160 create a room called test
+00:19:49.760 and join that room you can now see we
+00:19:51.039 have that test room with one socket
+00:19:52.799 we join it with our other user and click
+00:19:54.320 join if i actually spell test properly
+00:19:57.039 you can now see there are two sockets
+00:19:58.400 inside that test room
+00:19:59.760 we can see each one of our clients our
+00:20:01.440 servers we can see a ton of different
+00:20:03.120 information on this dashboard so it's
+00:20:04.720 super useful and i highly recommend that
+00:20:06.400 you use this
+00:20:07.360 now you notice i talked a little bit
+00:20:08.559 about namespaces how we're in our root
+00:20:10.080 namespace and this is our admin
+00:20:11.440 namespace
+00:20:12.320 we can actually create our own custom
+00:20:13.919 namespaces if we want
+00:20:15.520 so in order to do that let's just close
+00:20:17.039 out of this admin ui go over to our
+00:20:19.039 server and what we want to do is just
+00:20:20.320 set up a separate io instance
+00:20:22.320 which is just going to be user io and we
+00:20:24.880 just say io.of
+00:20:26.320 and we pass it in the path to our thing
+00:20:28.159 which is going to be slash user in our
+00:20:29.600 case
+00:20:30.000 we're creating a username space we're
+00:20:32.000 calling it userio
+00:20:33.280 and all we do is say io.of to get that
+00:20:35.600 namespace and then everything we do on
+00:20:37.280 our normal i o we can do on this user io
+00:20:39.440 so we can say userido.on connection
+00:20:43.679 i'm going to get in a socket and i'm
+00:20:45.919 just going to come in here and say
+00:20:47.039 console.log
+00:20:49.039 connected to user name space
+00:20:54.000 just like that so now in order to
+00:20:56.640 connect to this username space what we
+00:20:58.000 need to do inside of our
+00:20:59.360 client is make a connection to it so we
+00:21:01.840 can create a user socket here
+00:21:04.080 and all we need to do is connect to our
+00:21:05.360 url just add the namespace to the end
+00:21:07.360 which is slash user in our case
+00:21:09.039 and now you can see we're printing out
+00:21:10.240 connected to user namespace in our
+00:21:11.840 console here
+00:21:12.640 and that's because on our server we're
+00:21:14.080 making that connection
+00:21:16.000 i'm going to be honest namespaces aren't
+00:21:17.520 something i use super often but
+00:21:19.120 if you wanted to have such as like an
+00:21:20.559 admin namespace that requires different
+00:21:22.400 credentials and authentication it's
+00:21:24.080 really easy to do
+00:21:25.120 with namespaces because you can actually
+00:21:26.720 connect middleware and you can connect
+00:21:28.480 middleware to anything such as our base
+00:21:30.000 io or our namespaces but it's really
+00:21:32.159 useful for connecting like
+00:21:33.200 authentication middleware
+00:21:34.640 to this thing right here so let's just
+00:21:36.799 come in here and we're going to say
+00:21:38.520 userio.use and this is how we set
+00:21:40.559 up different middleware and every
+00:21:42.159 middleware is going to take a socket and
+00:21:44.000 it's going to take a next function
+00:21:45.520 so this socket is just going to be all
+00:21:46.960 the information for the socket we're
+00:21:48.240 connecting with
+00:21:49.039 and next is just going to be the next
+00:21:50.480 middleware if we call next that means we
+00:21:52.320 successfully move on to the next
+00:21:53.840 middleware
+00:21:54.559 and if we call next with an error then
+00:21:56.000 that means that we had some type of
+00:21:57.280 problem and it's going to tell that user
+00:21:58.960 the problem we had so what i want to do
+00:22:00.960 here is get authentication information
+00:22:03.280 and when you connect to a socket right
+00:22:05.360 here you can pass in
+00:22:06.960 off information for us what we're going
+00:22:09.440 to do is we're going to pass
+00:22:10.559 in a token so we're just going to say
+00:22:12.480 token is just going to say
+00:22:13.919 test that's our token name so we're
+00:22:16.000 passing in an auth token
+00:22:17.440 of the name of test up to our user
+00:22:19.120 socket and inside of here
+00:22:20.640 we can access that by saying
+00:22:22.200 socket.handshake
+00:22:24.480 and then we can access anything inside
+00:22:26.000 auth so we can say auth.token
+00:22:28.400 so what i want to do is say if we have a
+00:22:30.159 token then what i want to do is i want
+00:22:32.080 to take our socket.username
+00:22:34.159 and i want to set it equal to you know
+00:22:36.000 getting our username
+00:22:38.080 from the token imagine that you are have
+00:22:39.919 an actual token you can get the username
+00:22:41.679 from that token
+00:22:42.799 and let's just pass it in the token that
+00:22:44.559 we have
+00:22:46.559 so for our use case we're just going to
+00:22:48.480 create that function real quick get
+00:22:50.000 username from token
+00:22:51.200 takes in a token and for us it's just
+00:22:53.039 going to return the token but you can
+00:22:54.559 you know access a database whatever you
+00:22:56.159 need to do to get the actual user
+00:22:57.679 information
+00:22:58.400 from that token then we can call next
+00:23:01.600 otherwise if we didn't pass up a token
+00:23:03.360 what i want to do is call next
+00:23:05.120 this time i'm going to pass it in a new
+00:23:06.840 error
+00:23:09.039 and this error will just say please
+00:23:12.400 send token just saying that you didn't
+00:23:14.320 send us a token
+00:23:16.080 so now when i save this what i want to
+00:23:18.159 do up here is i want to say connected to
+00:23:19.520 user namespace
+00:23:20.720 with username i'm going to pass
+00:23:24.000 in socket
+00:23:27.120 dot username so now you can see it says
+00:23:30.159 connected to usernamespace with username
+00:23:32.080 test which is the token we sent up
+00:23:34.080 so since we're setting our username on
+00:23:36.000 our socket we can actually access that
+00:23:37.520 inside of here
+00:23:38.400 so this is the perfect way to
+00:23:39.840 authenticate users you can check
+00:23:41.440 are they authenticated if so then this
+00:23:43.679 you know we're going to get our user
+00:23:44.960 and call next otherwise throw an error
+00:23:46.799 and the nice thing about this is only on
+00:23:48.559 our user instance of our io because
+00:23:50.240 we're setting up the middleware on this
+00:23:51.600 user io namespace while our normal
+00:23:53.840 namespace you see we don't pass any
+00:23:55.200 authentication to it but it still works
+00:23:57.200 just fine and that's because we're not
+00:23:58.559 running this middleware
+00:23:59.679 on our normal i o we're only running on
+00:24:01.840 this small namespace right here
+00:24:04.320 now for some reason we had an error with
+00:24:06.000 the connection for example we didn't
+00:24:07.520 pass up any authentication information
+00:24:09.919 like this well then what we need to do
+00:24:11.840 is we need to be able to check to make
+00:24:13.120 sure we didn't pass up any information
+00:24:14.880 and to do that we can just say user
+00:24:16.960 socket dot on
+00:24:18.799 connect underscore error this is going
+00:24:21.520 to pass us down an
+00:24:22.559 error message and all i want to do is
+00:24:25.520 just
+00:24:26.000 say display message of error to see what
+00:24:29.360 this is
+00:24:30.080 if we save you can see we get error
+00:24:31.520 please send token which is the error we
+00:24:33.440 put right here
+00:24:34.559 so we can easily send down errors to the
+00:24:36.640 client if for some reason they didn't
+00:24:38.000 have the authentication information that
+00:24:39.520 we need
+00:24:40.159 but if we were to pass in the
+00:24:41.440 authentication information again so i
+00:24:43.279 just say off
+00:24:44.400 and i say token let's just say it's
+00:24:46.640 equal to a
+00:24:48.159 now you can see we don't get any errors
+00:24:49.600 and it says we connected with the user
+00:24:50.960 name a
+00:24:52.000 and the last thing that i want to cover
+00:24:53.520 in this socket io tutorial is how socket
+00:24:55.600 io actually handles disconnecting and
+00:24:57.440 reconnecting
+00:24:58.400 so let's just come in here and set up a
+00:24:59.840 really quick add event listener on our
+00:25:01.679 document for whenever we press a key
+00:25:03.600 down
+00:25:04.400 and what i want to do simply inside of
+00:25:06.159 here is just make sure that we're not
+00:25:08.000 inside of an input so we'll just say if
+00:25:09.520 e dot target
+00:25:11.039 dot matches
+00:25:14.159 matches input
+00:25:17.679 then we're going to return otherwise if
+00:25:19.760 we press the key
+00:25:22.799 c then what i want to do is connect so
+00:25:24.799 we'll say socket.connect
+00:25:26.799 otherwise if i press the key d then what
+00:25:29.039 i want to do is
+00:25:30.080 disconnect my socket so this is just
+00:25:32.000 allowing me to really easily connect or
+00:25:33.600 disconnect from the socket connection
+00:25:35.760 and then i'm going to set up an interval
+00:25:37.600 and inside this interval all i want to
+00:25:39.200 do is send
+00:25:39.919 the same message over and over again so
+00:25:41.520 we're going to say let count
+00:25:43.679 equals zero and i just want to
+00:25:45.120 essentially ping the server so i can say
+00:25:47.240 socket.emit
+00:25:49.679 and we're just going to add up our count
+00:25:51.679 here so i'm just going to be pinging
+00:25:52.799 this
+00:25:53.440 every one second and it's going to be
+00:25:55.200 adding one to our account every single
+00:25:56.640 time
+00:25:57.039 then in our server what i'm going to do
+00:25:58.720 is i'm just going to say socket
+00:26:01.279 dot on
+00:26:04.559 it's going to take in a number and i
+00:26:06.080 just want to console.log
+00:26:08.240 that number so now what we should do is
+00:26:10.720 see our number being counted up a little
+00:26:12.400 bit
+00:26:12.720 and what i want to do is just make sure
+00:26:14.240 that we only have one of these
+00:26:15.840 clients running at a time so we can
+00:26:17.200 really easily see what's going on as you
+00:26:18.880 can see we're just counting up one two
+00:26:20.559 three four and what i'm going to do is
+00:26:22.240 i'm going to disconnect so i'm going to
+00:26:23.520 click d
+00:26:24.240 and i'm going to disconnect and you're
+00:26:25.360 going to notice we get no more messages
+00:26:26.960 being sent
+00:26:27.840 and now since i've waited a while when i
+00:26:29.520 reconnect you're going to notice all of
+00:26:31.279 our messages get sent
+00:26:32.320 that have been queued up so we stopped
+00:26:33.679 at 7 and then immediately it's sent to
+00:26:35.440 8910 all the way up to like 15 or 16
+00:26:37.279 wherever we were currently at
+00:26:38.720 so by default socket io when you
+00:26:40.480 disconnect will store
+00:26:41.919 all of the messages that you send and
+00:26:43.760 then once you reconnect it'll send them
+00:26:45.360 all at once
+00:26:46.480 if you don't want to do this what you
+00:26:47.919 can do is you can use the volatile flag
+00:26:49.679 so i can say dot volatile
+00:26:51.600 and then what this is saying is if i
+00:26:53.120 can't send the message just forget about
+00:26:55.039 it completely
+00:26:55.760 so let me save reset us back to our
+00:26:57.360 account to 1 and disconnect
+00:26:59.200 i'm going to disconnect for a little
+00:27:00.400 while and then when i reconnect you'll
+00:27:02.159 notice
+00:27:02.640 it just starts us at our account
+00:27:04.159 wherever we were it doesn't resend all
+00:27:05.840 the previous messages it just ignores
+00:27:07.600 them
+00:27:07.919 all that's what volatile does it says if
+00:27:10.240 it can't send the message delete it
+00:27:11.840 and if we don't use volatile it'll
+00:27:13.360 continually try to resend the message
+00:27:14.880 until you reconnect
+00:27:16.240 now i know this is a lot to cover but i
+00:27:18.000 have tons of socket io tutorials that
+00:27:19.919 cover these concepts in great depth
+00:27:21.760 you can find them over here so make sure
+00:27:23.440 you check those out if you want to learn
+00:27:24.640 even more about socket io

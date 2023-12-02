@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ES2018",
+		"resolveJsonModule": true,
+		"module": "nodenext",
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"strict": true,
+		"esModuleInterop": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["./node_modules", "**/*.spec.ts"]
+}
