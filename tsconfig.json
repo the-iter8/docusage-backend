@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"diagnostics": true,
 		"target": "ES2018",
 		"resolveJsonModule": true,
 		"module": "nodenext",
